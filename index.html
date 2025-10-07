@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Classifier</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .upload-section {
+            text-align: center;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f8f9ff;
+        }
+
+        .upload-area:hover {
+            border-color: #764ba2;
+            background: #f0f2ff;
+        }
+
+        .upload-area.dragging {
+            border-color: #764ba2;
+            background: #e8eaff;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .preview-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        #imagePreview {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .result {
+            background: #f0f9ff;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .result h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .label {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+            margin: 10px 0;
+        }
+
+        .probability {
+            font-size: 1.2em;
+            color: #666;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin: 5px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .search-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .result-item {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .result-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .result-item img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .result-info {
+            padding: 15px;
+        }
+
+        .result-info h4 {
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        .result-info p {
+            color: #666;
+            font-size: 0.9em;
+            margin: 4px 0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fee;
+            border-left: 4px solid #f44;
+            padding: 15px;
+            border-radius: 8px;
+            color: #c00;
+            margin-top: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: #666;
+            font-size: 16px;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .tab.active {
+            color: #667eea;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🖼️ Image Classifier</h1>
+        
+        <div class="card">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('upload')">Upload & Classify</button>
+                <button class="tab" onclick="switchTab('search')">Search Images</button>
+            </div>
+
+            <div id="uploadTab" class="tab-content active">
+                <div class="upload-section">
+                    <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                        <div class="upload-icon">📁</div>
+                        <p>Click to upload or drag and drop an image here</p>
+                        <p style="color: #999; font-size: 0.9em;">Supports JPG, PNG, GIF</p>
+                    </div>
+                    <input type="file" id="fileInput" accept="image/*" onchange="handleFileSelect(event)">
+                    
+                    <div class="preview-container" id="previewContainer" style="display: none;">
+                        <img id="imagePreview" alt="Preview">
+                        <div style="margin-top: 20px;">
+                            <button onclick="classifyImage()" id="classifyBtn">Classify Image</button>
+                            <button onclick="resetUpload()">Reset</button>
+                        </div>
+                    </div>
+
+                    <div id="resultContainer"></div>
+                </div>
+            </div>
+
+            <div id="searchTab" class="tab-content">
+                <div class="search-section">
+                    <input type="text" id="folderInput" placeholder="Search by folder (e.g., cats, dogs)">
+                    <input type="text" id="labelInput" placeholder="Search by label">
+                    <button onclick="searchImages()">Search</button>
+                    <button onclick="clearSearch()">Clear</button>
+                </div>
+                <div id="searchResults"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+        let selectedFile = null;
+
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+        }
+
+        // Drag and drop handlers
+        const uploadArea = document.getElementById('uploadArea');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragging');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragging');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragging');
+            const file = e.dataTransfer.files[0];
+            if (file && file.type.startsWith('image/')) {
+                handleFile(file);
+            }
+        });
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        function handleFile(file) {
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('imagePreview').src = e.target.result;
+                document.getElementById('previewContainer').style.display = 'block';
+                document.getElementById('resultContainer').innerHTML = '';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resetUpload() {
+            selectedFile = null;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('previewContainer').style.display = 'none';
+            document.getElementById('resultContainer').innerHTML = '';
+        }
+
+        async function classifyImage() {
+            if (!selectedFile) return;
+
+            const classifyBtn = document.getElementById('classifyBtn');
+            classifyBtn.disabled = true;
+            
+            document.getElementById('resultContainer').innerHTML = '<div class="loading"><div class="spinner"></div>Classifying image...</div>';
+
+            const formData = new FormData();
+            formData.append('image', selectedFile);
+
+            try {
+                const response = await fetch(`${API_BASE}/classify?save_to_s3=true`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                displayResult(data);
+            } catch (error) {
+                document.getElementById('resultContainer').innerHTML = 
+                    `<div class="error">Error: ${error.message}</div>`;
+            } finally {
+                classifyBtn.disabled = false;
+            }
+        }
+
+        function displayResult(data) {
+            const percentage = (data.probability * 100).toFixed(2);
+            const resultHTML = `
+                <div class="result">
+                    <h3>Classification Result</h3>
+                    <div class="label">${data.label}</div>
+                    <div class="probability">Confidence: ${percentage}%</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${percentage}%"></div>
+                    </div>
+                    <p style="margin-top: 15px; color: #666;">
+                        <strong>Folder:</strong> ${data.folder}<br>
+                        <strong>S3 Key:</strong> ${data.s3_key || 'N/A'}<br>
+                        <strong>Database ID:</strong> ${data.db_id || 'N/A'}
+                    </p>
+                </div>
+            `;
+            document.getElementById('resultContainer').innerHTML = resultHTML;
+        }
+
+        async function searchImages() {
+            const folder = document.getElementById('folderInput').value.trim();
+            const label = document.getElementById('labelInput').value.trim();
+
+            if (!folder && !label) {
+                alert('Please enter a folder or label to search');
+                return;
+            }
+
+            const resultsDiv = document.getElementById('searchResults');
+            resultsDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Searching...</div>';
+
+            try {
+                let url = `${API_BASE}/search?`;
+                if (folder) url += `folder=${encodeURIComponent(folder)}&`;
+                if (label) url += `label=${encodeURIComponent(label)}&`;
+                url += 'max_items=50';
+
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                displaySearchResults(data);
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+            }
+        }
+
+        async function displaySearchResults(data) {
+            const resultsDiv = document.getElementById('searchResults');
+
+            if (!data.items || data.items.length === 0) {
+                resultsDiv.innerHTML = '<p style="text-align: center; color: #999; padding: 40px;">No results found</p>';
+                return;
+            }
+
+            let html = `<h3 style="margin-bottom: 15px;">Found ${data.count} results (Source: ${data.source})</h3>`;
+            html += '<div class="results-grid">';
+
+            for (const item of data.items) {
+                const s3Key = data.source === 's3' ? item.s3_key : item.s3_key;
+                const metadata = data.source === 's3' ? item.metadata : item;
+                
+                if (s3Key) {
+                    const imageUrl = await getSignedUrl(s3Key);
+                    
+                    html += `
+                        <div class="result-item">
+                            <img src="${imageUrl}" alt="${metadata?.label || 'Image'}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22280%22 height=%22200%22%3E%3Crect fill=%22%23ddd%22 width=%22280%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%23999%22%3EImage not available%3C/text%3E%3C/svg%3E'">
+                            <div class="result-info">
+                                <h4>${metadata?.label || 'Unknown'}</h4>
+                                ${metadata?.probability ? `<p><strong>Confidence:</strong> ${(metadata.probability * 100).toFixed(2)}%</p>` : ''}
+                                <p><strong>Folder:</strong> ${metadata?.folder || 'N/A'}</p>
+                                <p><strong>File:</strong> ${metadata?.original_filename || s3Key.split('/').pop()}</p>
+                                ${metadata?.timestamp ? `<p><strong>Date:</strong> ${new Date(metadata.timestamp).toLocaleString()}</p>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            html += '</div>';
+            resultsDiv.innerHTML = html;
+        }
+
+        async function getSignedUrl(s3Key) {
+            try {
+                const response = await fetch(`${API_BASE}/signed-url?s3_key=${encodeURIComponent(s3Key)}`);
+                if (!response.ok) {
+                    throw new Error('Failed to get signed URL');
+                }
+                const data = await response.json();
+                return data.url;
+            } catch (error) {
+                console.error('Error getting signed URL:', error);
+                return '';
+            }
+        }
+
+        function clearSearch() {
+            document.getElementById('folderInput').value = '';
+            document.getElementById('labelInput').value = '';
+            document.getElementById('searchResults').innerHTML = '';
+        }
+    </script>
+</body>
+</html>

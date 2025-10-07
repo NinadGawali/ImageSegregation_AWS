@@ -1,0 +1,11 @@
+streamlit>=1.18
+torch>=2.0
+torchvision>=0.15
+Pillow
+boto3
+fastapi
+uvicorn
+dotenv
+sqlalchemy
+python-multipart
+aiofiles
