@@ -58,7 +58,7 @@ s3://your-bucket-name/uploads/{uuid_filename}.jpg
 
 ### 1️⃣ Clone the Repository
 ```bash
-git clone https://github.com/<your-username>/ImageSegregation_AWS.git
+git clone https://github.com/NinadGawali/ImageSegregation_AWS.git
 cd ImageSegregation_AWS
 ```
 ### 2️⃣ Create a Virtual Environment
