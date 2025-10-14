@@ -88,16 +88,16 @@ S3_BUCKET_NAME=your_s3_bucket_name
 ### 🧱 Start the FastAPI Backend
 ```bash
 cd backend
-uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+uvicorn app:app --host 0.0.0.0 --port 8080 --reload
 ```
 Once the server starts, open:
-👉 http://127.0.0.1:8000/docs
+👉 http://127.0.0.1:8080/docs
 to test all endpoints using the built-in Swagger UI.
 
 ### 💻 (Optional) Run the Streamlit Front-End
 ```bash
-cd frontend
-streamlit run app.py
+cd frontend_streamlit
+streamlit run streamlit_app.py
 ```
 Then visit 
 👉 http://localhost:8501 
