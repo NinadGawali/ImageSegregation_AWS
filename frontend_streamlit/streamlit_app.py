@@ -36,7 +36,7 @@ except Exception:
 
 st.set_page_config(page_title="Image Classifier", layout="centered")
 
-API_BASE = os.getenv("API_BASE", "http://localhost:8080")  # Backend FastAPI URL
+API_BASE = os.getenv("API_BASE", "http://3.236.147.176:8080")  # Backend FastAPI URL
 
 st.title("Image Segregator & Search AWS S3")
 
